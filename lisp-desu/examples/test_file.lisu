@@ -1,0 +1,63 @@
+
+
+; hello
+(print "sugma nuts")
+(main)
+(test nuts ())
+
+(defun main ()
+  (print "Hello, world!"))
+
+;;;; guessing_game.lisp
+
+(in-package #:guessing_game)
+
+(defun stdout (text)
+  (format t text)
+  (finish-output))
+
+; 2, 3, 4,
+
+(defun print_num (n)
+  (stdout (concatenate 'string (write-to-string n) "~%")))
+
+(defun loop_hi (n)
+  (if (< n 0)
+    nil
+    (progn (print_num n)
+           (loop_hi (- n 1)))))
+;; loop_hi(n - 1)
+
+
+(defun guess_loop (num)
+  (loop
+    (let ((guess (parse-integer (read-line))))
+      (cond ((> guess num) (stdout "Guess is too large~%"))
+            ((< guess num) (stdout "Guess is too small~%"))
+            ((= guess num) (return 0))))))
+
+(defun main ()
+  (let ((num (random 100)))
+    (stdout "Welcome to le guessing game!~%Guess a number between 1-100.~%")
+    (guess_loop num)
+    (stdout "That's correct!~%")))
+;(main)
+
+;; def guess_loop (num)
+;;   while (true)
+;;      guess = input()
+;;      if guess > num:
+;;        print("Guess is too large")
+;;      if guess < num:
+;;        print("Guess is too small")
+;;      if guess == num:
+;;        return 0
+;;
+;; def main ()
+;;   num = random.randNum(1, 100)
+;;   print("Welcome to le guessing game!\nGuess a number between 1-100.)
+;;   guess_loop(num)
+;;   print("That's correct!")
+;; main()
+
+;;; vim: set ft=lisp lisp:
