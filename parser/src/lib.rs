@@ -28,7 +28,7 @@ pub enum SExpr {
 #[derive(Debug, Clone)]
 pub enum AtomKind {
     Literal(LexerToken),
-    Symbol(LexerToken),
+    Symbol(LexerToken, Option<Keyword>),
 }
 
 #[derive(Debug, Clone)]
@@ -73,7 +73,7 @@ impl<'a> StringReader<'a> {
             LexerTokenKind::Whitespace | LexerTokenKind::LineComment => self.next_token(),
             LexerTokenKind::OpenParen => self.parse_sexpr(lexer_token),
             LexerTokenKind::CloseParen => todo!(),
-            LexerTokenKind::Keyword => todo!(),
+            LexerTokenKind::Keyword(..) => todo!(),
             LexerTokenKind::Ident => todo!(),
             LexerTokenKind::OpenAngleBracket => todo!(),
             LexerTokenKind::CloseAngleBracket => todo!(),
@@ -177,9 +177,13 @@ impl<'a> StringReader<'a> {
                 kind: TokenKind::Nil,
             },
             // Atom
-            LexerTokenKind::Ident | LexerTokenKind::Keyword => Token {
+            LexerTokenKind::Ident => Token {
                 span: lexer_token.span,
-                kind: TokenKind::Atom(AtomKind::Symbol(lexer_token)),
+                kind: TokenKind::Atom(AtomKind::Symbol(lexer_token, None)),
+            },
+            LexerTokenKind::Keyword(kw) => Token {
+                span: lexer_token.span,
+                kind: TokenKind::Atom(AtomKind::Symbol(lexer_token, Some(kw))),
             },
             _ => Token {
                 span: lexer_token.span,
@@ -220,8 +224,9 @@ impl<'a> StringReader<'a> {
                 AtomKind::Literal(literal) => {
                     self.cursor.dbg_token(literal);
                 }
-                AtomKind::Symbol(symbol) => {
+                AtomKind::Symbol(symbol, kw) => {
                     self.cursor.dbg_token(symbol);
+                    dbg!(kw);
                 }
             },
             TokenKind::Nil => {

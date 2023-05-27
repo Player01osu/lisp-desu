@@ -47,6 +47,7 @@ impl<'a> Pythonify<'a> {
     }
 
     fn transpile(&mut self, token: Token, string: String) -> Result<String, TranspileError> {
+        self.parser.dbg_token(&token);
         match token.kind {
             TokenKind::SExpr(ref _s) => {
                 let sexpr = self.transpile_sexpr(&token, string)?;
@@ -79,7 +80,7 @@ impl<'a> Pythonify<'a> {
                 TokenKind::Atom(AtomKind::Literal(ref literal)) => {
                     Ok(format!("{string}\n{}", literal.as_str(self.src)))
                 }
-                TokenKind::Atom(AtomKind::Symbol(ref symbol)) => {
+                TokenKind::Atom(AtomKind::Symbol(ref symbol, _)) => {
                     let args = {
                         let mut args_vec = vec![];
                         for token in cdr {
@@ -110,7 +111,7 @@ impl<'a> Pythonify<'a> {
             TokenKind::Atom(AtomKind::Literal(ref literal)) => {
                 Ok(literal.as_str(self.src).to_string())
             }
-            TokenKind::Atom(AtomKind::Symbol(ref symbol)) => {
+            TokenKind::Atom(AtomKind::Symbol(ref symbol, _)) => {
                 Ok(symbol.as_str(self.src).to_string())
             }
             TokenKind::Nil => Ok(string),

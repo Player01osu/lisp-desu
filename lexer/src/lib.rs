@@ -2,6 +2,9 @@
 use std::io::stdout;
 use std::io::Write;
 use std::{fmt::Display, str::Chars};
+use strum::EnumString;
+
+use lexer_derive::Keyword;
 
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -30,7 +33,7 @@ pub struct Cursor<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TokenKind {
-    Keyword,
+    Keyword(Keyword),
     Ident,
     Whitespace,
     Comma,
@@ -64,6 +67,20 @@ pub enum TokenKind {
     EOF,
 }
 
+#[allow(non_camel_case_types)]
+#[derive(Keyword, EnumString, Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Keyword {
+    defun,
+    and,
+    or,
+    not,
+    cond,
+    nil,
+    #[strum(serialize = "if")]
+    r#if,
+    case,
+}
+
 fn is_whitespace(c: char) -> bool {
     matches!(c, ' ' | '\t' | '\n')
 }
@@ -74,24 +91,6 @@ fn is_end_ident(c: char) -> bool {
 
 fn is_string_literal(c: char) -> bool {
     matches!(c, '"')
-}
-
-// TODO Pull this into proc macro.
-//matches!(c, 'd' | 'a' | 'o' | 'n' | 'c' | 'i' | 'l')
-//matches!(
-//    s,
-//    "defun" | "and" | "or" | "not" | "cond" | "nil" | "if" | "case"
-//)
-pub const KEYWORDS: [&str; 8] = ["defun", "and", "or", "not", "cond", "nil", "if", "case"];
-
-fn is_keyword_prefix(c: char) -> bool {
-    KEYWORDS
-        .iter()
-        .any(|w| (*w).chars().next().unwrap() == c)
-}
-
-fn is_keyword(s: &str) -> bool {
-    KEYWORDS.iter().any(|w| s.eq(*w))
 }
 
 impl Token {
@@ -180,6 +179,7 @@ impl<'a> Cursor<'a> {
             ')' => CloseParen,
             ',' => Comma,
 
+            '0'..='9' => self.consume_literal(),
             c if is_whitespace(c) => self.consume_whitespace(),
             c if is_keyword_prefix(c) => self.consume_keyword(c),
             c if is_string_literal(c) => self.consume_string_literal(c),
@@ -213,7 +213,7 @@ impl<'a> Cursor<'a> {
             self.buf.push(c);
         }
         match self.buf.as_str() {
-            s if is_keyword(s) => TokenKind::Keyword,
+            s if is_keyword(s) => TokenKind::Keyword(Keyword::try_from(s).unwrap()),
             _ => TokenKind::Ident,
         }
     }
@@ -248,6 +248,17 @@ impl<'a> Cursor<'a> {
             }
 
             self.next_char();
+        }
+    }
+
+    fn consume_literal(&mut self) -> TokenKind {
+        loop {
+            match self.peak() {
+                '0'..='9' => {
+                    self.next_char();
+                }
+                _ => return TokenKind::Literal,
+            }
         }
     }
 
