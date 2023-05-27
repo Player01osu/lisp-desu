@@ -1,32 +1,32 @@
 #![allow(dead_code)]
 use ast::{Pythonify, TranspileError};
-use parser::{ParseError, StringReader, TokenKind};
-use std::env::{args, Args};
+use parser::ParseError;
+use std::env::args;
 use std::fs;
 use std::path::Path;
 
 #[derive(Debug)]
 enum CliError {
-    ArgsError(ArgsError),
-    ParseError(ParseError),
-    TranspileError(TranspileError),
+    Args(ArgsError),
+    Parse(ParseError),
+    Transpile(TranspileError),
 }
 
 impl From<TranspileError> for CliError {
     fn from(value: TranspileError) -> Self {
-        Self::TranspileError(value)
+        Self::Transpile(value)
     }
 }
 
 impl From<std::io::Error> for CliError {
-    fn from(value: std::io::Error) -> Self {
+    fn from(_value: std::io::Error) -> Self {
         todo!()
     }
 }
 
 impl From<ParseError> for CliError {
     fn from(value: ParseError) -> Self {
-        Self::ParseError(value)
+        Self::Parse(value)
     }
 }
 
@@ -38,7 +38,7 @@ enum ArgsError {
 
 fn main() -> Result<(), CliError> {
     let args = args().collect::<Vec<String>>();
-    let program = args.first().expect("Program name should exist");
+    let _program = args.first().expect("Program name should exist");
     if args.len() < 2 {
         // TODO
         todo!("REPL mode");
@@ -65,7 +65,7 @@ fn main() -> Result<(), CliError> {
         }
     }
 
-    let file_path = inpath.ok_or_else(|| CliError::ArgsError(ArgsError::MissingInput))?;
+    let file_path = inpath.ok_or_else(|| CliError::Args(ArgsError::MissingInput))?;
     let outpath = outpath.map(|v| v.to_owned()).unwrap_or_else(|| {
         format!(
             "{}.py",

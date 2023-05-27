@@ -102,10 +102,6 @@ impl Token {
     pub fn kind(&self) -> &TokenKind {
         &self.kind
     }
-
-    pub fn len(&self) -> usize {
-        self.len
-    }
 }
 
 impl Span {

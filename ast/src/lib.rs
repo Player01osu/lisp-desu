@@ -41,7 +41,7 @@ impl<'a> Pythonify<'a> {
         let token = self.parser.next_token()?;
         let string = self.transpile(token, String::new())?;
         println!("{string}");
-        file.write(string.as_bytes())?;
+        file.write_all(string.as_bytes())?;
         file.flush()?;
         Ok(())
     }
