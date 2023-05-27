@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use lexer::{Cursor, Span, Token as LexerToken, TokenKind as LexerTokenKind};
+use lexer::{Cursor, Keyword, Span, Token as LexerToken, TokenKind as LexerTokenKind};
 
 pub struct Parser<'a> {
     pub string_reader: StringReader<'a>,
@@ -48,21 +48,16 @@ impl ParseError {
     }
 }
 
-const CONS_KINDS: [LexerTokenKind; 13] = [
-    LexerTokenKind::Keyword,
-    LexerTokenKind::Ident,
-    LexerTokenKind::Backquote,
-    LexerTokenKind::Literal,
-    LexerTokenKind::OpenParen,
-    LexerTokenKind::CloseParen,
-    LexerTokenKind::OpenParen,
-    LexerTokenKind::CloseParen,
-    LexerTokenKind::OpenAngleBracket,
-    LexerTokenKind::CloseAngleBracket,
-    LexerTokenKind::Eq,
-    LexerTokenKind::Bang,
-    LexerTokenKind::And,
-];
+macro_rules! token_expect {
+    ($self:ident, $pat:pat) => {{
+        let lexer_token = $self.next_lexer();
+        if matches!(lexer_token.kind, $pat) {
+            std::result::Result::Ok(lexer_token)
+        } else {
+            std::result::Result::Err(ParseError::expected(&[LexerTokenKind::Dummy], lexer_token))
+        }
+    }};
+}
 
 impl<'a> StringReader<'a> {
     pub fn new(src: &'a str) -> Self {
@@ -100,7 +95,21 @@ impl<'a> StringReader<'a> {
         let start_row = lexer_token.span.start_row;
         let start_col = lexer_token.span.start_col;
 
-        let car_lexer = self.expect_next(&CONS_KINDS)?;
+        let car_lexer = token_expect!(
+            self,
+            LexerTokenKind::Keyword(..)
+                | LexerTokenKind::Ident
+                | LexerTokenKind::Backquote
+                | LexerTokenKind::Literal
+                | LexerTokenKind::OpenParen
+                | LexerTokenKind::CloseParen
+                | LexerTokenKind::OpenAngleBracket
+                | LexerTokenKind::CloseAngleBracket
+                | LexerTokenKind::Eq
+                | LexerTokenKind::Bang
+                | LexerTokenKind::And
+        )?;
+
         let cell = self.parse_cell(car_lexer)?;
         let car = match cell.kind {
             TokenKind::Nil => {
@@ -119,7 +128,21 @@ impl<'a> StringReader<'a> {
 
         let mut cdr_tokens = vec![];
         loop {
-            let cdr_lexer = self.expect_next(&CONS_KINDS)?;
+            let cdr_lexer = token_expect!(
+                self,
+                LexerTokenKind::Keyword(..)
+                | LexerTokenKind::Ident
+                | LexerTokenKind::Backquote
+                | LexerTokenKind::Literal
+                | LexerTokenKind::OpenParen
+                | LexerTokenKind::CloseParen
+                | LexerTokenKind::OpenAngleBracket
+                | LexerTokenKind::CloseAngleBracket
+                | LexerTokenKind::Eq
+                | LexerTokenKind::Bang
+                | LexerTokenKind::And
+            )?;
+
             let cdr = self.parse_cell(cdr_lexer)?;
             let is_nil = matches!(cdr.kind, TokenKind::Nil);
             cdr_tokens.push(cdr);
@@ -172,17 +195,6 @@ impl<'a> StringReader<'a> {
                 break token;
             }
         }
-    }
-
-    fn expect_next(&mut self, expected_kind: &[LexerTokenKind]) -> Result<LexerToken, ParseError> {
-        let lexer_token = self.next_lexer();
-        for expected in expected_kind {
-            match lexer_token.kind {
-                kind if kind == *expected => return Ok(lexer_token),
-                _ => continue,
-            }
-        }
-        Err(ParseError::expected(expected_kind, lexer_token))
     }
 
     // TODO
